@@ -63,32 +63,44 @@ public class ProtectionsManager {
         save();
     }
 
+    // Call this after modifying a protection's state (e.g., adding an allowed player)
+    public static synchronized void updateProtection(Protection p) {
+        save();
+    }
+
     public static Collection<Protection> all() { return protections.values(); }
+
+    public static Optional<Protection> getById(String id) {
+        return Optional.ofNullable(protections.get(id));
+    }
 
     public static Optional<Protection> findByOwnerAt(UUID owner, BlockPos pos, String dimension) {
         return protections.values().stream()
-                .filter(p -> p.owner.equals(owner) && p.dimension.equals(dimension))
-                .filter(p -> Math.abs(p.x - pos.getX()) <= Protection.H_RADIUS && Math.abs(p.z - pos.getZ()) <= Protection.H_RADIUS)
+                .filter(p -> p.owner.equals(owner))
+                .filter(p -> p.contains(pos, dimension))
                 .min(Comparator.comparingInt(p -> Math.abs(p.x - pos.getX()) + Math.abs(p.z - pos.getZ())));
     }
 
     public static List<Protection> protectionsContaining(BlockPos pos, String dimension) {
         List<Protection> out = new ArrayList<>();
         for (Protection p : protections.values()) {
-            if (p.dimension.equals(dimension) && Math.abs(p.x - pos.getX()) <= Protection.H_RADIUS && Math.abs(p.z - pos.getZ()) <= Protection.H_RADIUS)
+            if (p.contains(pos, dimension)) {
                 out.add(p);
+            }
         }
         return out;
     }
 
     public static boolean isPlayerAllowedAt(UUID player, BlockPos pos, String dimension) {
         List<Protection> list = protectionsContaining(pos, dimension);
-        if (list.isEmpty()) return false;
-        // if any protection contains pos and player is owner or in allowed list -> allowed
+        if (list.isEmpty()) return true; // No protection here, so action is allowed
+
+        // If there is a protection, check if the player is the owner or is in the allowed list
         for (Protection p : list) {
-            if (p.owner.equals(player)) return true;
-            if (p.allowed.contains(player)) return true;
+            if (p.owner.equals(player) || p.allowed.contains(player)) {
+                return true;
+            }
         }
-        return false;
+        return false; // Player is not allowed in any of the protections at this location
     }
 }

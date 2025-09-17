@@ -9,12 +9,12 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
-import java.util.List;
+import java.util.Optional;
 
 public class ProtectionCommands {
     public static void register() {
         CommandRegistrationCallback.EVENT.register(
-                (CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment env) -> {
+                (dispatcher, registryAccess, env) -> {
                     dispatcher.register(CommandManager.literal("sprotection")
                             .then(CommandManager.literal("add")
                                     .then(CommandManager.argument("player", StringArgumentType.word())
@@ -22,29 +22,27 @@ public class ProtectionCommands {
                                                 ServerPlayerEntity executor = ctx.getSource().getPlayer();
                                                 if (executor == null) return 0;
 
+                                                Optional<Protection> protectionOpt = findOwnedProtectionAt(executor);
+                                                if (protectionOpt.isEmpty()) {
+                                                    executor.sendMessage(Text.literal("You are not standing inside one of your protections."), false);
+                                                    return 1;
+                                                }
+
                                                 String targetName = StringArgumentType.getString(ctx, "player");
                                                 ServerPlayerEntity target = ctx.getSource().getServer().getPlayerManager().getPlayer(targetName);
-
                                                 if (target == null) {
                                                     executor.sendMessage(Text.literal("Player not found: " + targetName), false);
                                                     return 1;
                                                 }
 
-                                                Protection p = findOwnedProtectionAt(executor);
-                                                if (p == null) {
-                                                    executor.sendMessage(Text.literal("You are not standing inside your own protection."), false);
-                                                    return 1;
-                                                }
-
-                                                if (!p.allowed.contains(target.getUuid())) {
+                                                Protection p = protectionOpt.get();
+                                                if (p.allowed.contains(target.getUuid())) {
+                                                    executor.sendMessage(Text.literal(targetName + " is already allowed in this protection."), false);
+                                                } else {
                                                     p.allowed.add(target.getUuid());
                                                     ProtectionsManager.updateProtection(p);
-                                                    executor.sendMessage(Text.literal("Added " + target.getName().getString() + " to your protection."), false);
-
-                                                    // Notify the added player
+                                                    executor.sendMessage(Text.literal("Added " + targetName + " to this protection."), false);
                                                     target.sendMessage(Text.literal("You have been added to " + executor.getName().getString() + "'s protection."), false);
-                                                } else {
-                                                    executor.sendMessage(Text.literal("That player is already allowed."), false);
                                                 }
                                                 return 1;
                                             })))
@@ -54,25 +52,26 @@ public class ProtectionCommands {
                                                 ServerPlayerEntity executor = ctx.getSource().getPlayer();
                                                 if (executor == null) return 0;
 
+                                                Optional<Protection> protectionOpt = findOwnedProtectionAt(executor);
+                                                if (protectionOpt.isEmpty()) {
+                                                    executor.sendMessage(Text.literal("You are not standing inside one of your protections."), false);
+                                                    return 1;
+                                                }
+
                                                 String targetName = StringArgumentType.getString(ctx, "player");
                                                 ServerPlayerEntity target = ctx.getSource().getServer().getPlayerManager().getPlayer(targetName);
-
                                                 if (target == null) {
                                                     executor.sendMessage(Text.literal("Player not found: " + targetName), false);
                                                     return 1;
                                                 }
 
-                                                Protection p = findOwnedProtectionAt(executor);
-                                                if (p == null) {
-                                                    executor.sendMessage(Text.literal("You are not standing inside your own protection."), false);
-                                                    return 1;
-                                                }
-
+                                                Protection p = protectionOpt.get();
                                                 if (p.allowed.remove(target.getUuid())) {
                                                     ProtectionsManager.updateProtection(p);
-                                                    executor.sendMessage(Text.literal("Removed " + target.getName().getString() + " from your protection."), false);
+                                                    executor.sendMessage(Text.literal("Removed " + targetName + " from this protection."), false);
+                                                    target.sendMessage(Text.literal("You have been removed from " + executor.getName().getString() + "'s protection."), false);
                                                 } else {
-                                                    executor.sendMessage(Text.literal("That player is not allowed."), false);
+                                                    executor.sendMessage(Text.literal(targetName + " was not in this protection's allowed list."), false);
                                                 }
                                                 return 1;
                                             })))
@@ -81,12 +80,8 @@ public class ProtectionCommands {
         );
     }
 
-    private static Protection findOwnedProtectionAt(ServerPlayerEntity player) {
-        String dim = player.getWorld().getRegistryKey().getValue().getPath();
-        List<Protection> inside = ProtectionsManager.protectionsContaining(player.getBlockPos(), dim);
-        for (Protection p : inside) {
-            if (p.owner.equals(player.getUuid())) return p;
-        }
-        return null;
+    private static Optional<Protection> findOwnedProtectionAt(ServerPlayerEntity player) {
+        String dim = player.getWorld().getRegistryKey().getValue().toString();
+        return ProtectionsManager.findByOwnerAt(player.getUuid(), player.getBlockPos(), dim);
     }
 }

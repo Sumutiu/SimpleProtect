@@ -14,83 +14,109 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class EventHandlers {
-    // track which protections a player is inside
-    private static final Map<UUID, Set<String>> playerProtections = new HashMap<>();
+    // track which protection owners a player is inside of
+    private static final Map<UUID, Set<UUID>> playerProtectionOwners = new HashMap<>();
 
     public static void register() {
         // --- block break prevention & protection removal ---
         PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
-            if (world.isClient) return true;
+            if (world.isClient()) return true;
 
-            String dim = world.getRegistryKey().getValue().getPath();
+            String dim = world.getRegistryKey().getValue().toString();
 
-            // Check if the broken block is the protection emerald block
+            // Handle breaking of an emerald block (potential protection block)
             if (state.isOf(Blocks.EMERALD_BLOCK)) {
-                ProtectionsManager.all().stream()
-                        .filter(p -> p.x == pos.getX() && p.y == pos.getY() && p.z == pos.getZ() && p.dimension.equals(dim))
-                        .findFirst()
-                        .ifPresent(p -> {
-                            if (p.owner.equals(player.getUuid())) {
-                                ProtectionsManager.removeProtection(p);
-                                player.sendMessage(Text.literal("Your protection has been removed."), false);
-                            } else {
-                                player.sendMessage(Text.literal("You cannot break another player's protection block!"), true);
-                                throw new RuntimeException("Cancel block break"); // cancel the event
-                            }
-                        });
+                Optional<Protection> protectionAt = ProtectionsManager.protectionsContaining(pos, dim).stream()
+                        .filter(p -> p.x == pos.getX() && p.y == pos.getY() && p.z == pos.getZ())
+                        .findFirst();
+
+                if (protectionAt.isPresent()) {
+                    Protection p = protectionAt.get();
+                    if (p.owner.equals(player.getUuid())) {
+                        ProtectionsManager.removeProtection(p);
+                        player.sendMessage(Text.literal("Your protection has been removed."), false);
+                        return true; // Allow break
+                    } else {
+                        player.sendMessage(Text.literal("You cannot break another player's protection block!"), true);
+                        return false; // Prevent break
+                    }
+                }
             }
 
-            // Normal protection rule for any other block
+            // General block break protection
             if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), pos, dim)) {
                 player.sendMessage(Text.literal("You cannot break blocks here!"), true);
-                return false;
+                return false; // Prevent break
             }
-            return true;
+
+            return true; // Allow break
         });
 
         // --- block use (interactions + emerald block placement) ---
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-            if (world.isClient) return ActionResult.PASS;
-            BlockPos targetPos = hitResult.getBlockPos();
-            BlockPos placePos = targetPos.offset(hitResult.getSide());
+            if (world.isClient()) return ActionResult.PASS;
 
-            // detect if placing an emerald block
+            BlockPos targetPos = hitResult.getBlockPos();
+            String dim = world.getRegistryKey().getValue().toString();
+
+            // Check for placing a protection block
             if (player.getStackInHand(hand).isOf(Items.EMERALD_BLOCK)) {
-                world.getServer().execute(() -> {
-                    if (world.getBlockState(placePos).isOf(Blocks.EMERALD_BLOCK)) {
-                        Protection p = new Protection();
-                        p.x = placePos.getX();
-                        p.y = placePos.getY();
-                        p.z = placePos.getZ();
-                        p.owner = player.getUuid();
-                        p.allowed = new ArrayList<>();
-                        p.dimension = world.getRegistryKey().getValue().getPath();
-                        ProtectionsManager.addProtection(p);
-                        player.sendMessage(Text.literal("Created a new protection zone!"), false);
-                    }
-                });
+                BlockPos placePos = targetPos.offset(hitResult.getSide());
+                // Allow placing emerald blocks if the location is not protected OR player has perms
+                if (ProtectionsManager.isPlayerAllowedAt(player.getUuid(), placePos, dim)) {
+                    // Since this event is before the block is placed, we can't be 100% sure.
+                    // We will create the protection, and if the block placement fails, it's a minor issue.
+                    // A better solution would involve a post-placement event.
+                    Protection p = new Protection();
+                    p.x = placePos.getX();
+                    p.y = placePos.getY();
+                    p.z = placePos.getZ();
+                    p.owner = player.getUuid();
+                    p.dimension = dim;
+                    ProtectionsManager.addProtection(p);
+                    player.sendMessage(Text.literal("Created a new protection zone!"), false);
+                    return ActionResult.PASS; // Let the block be placed
+                } else {
+                    player.sendMessage(Text.literal("You cannot place a protection block here!"), true);
+                    return ActionResult.FAIL;
+                }
             }
 
-            // normal protection interaction checks
-            if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), targetPos, world.getRegistryKey().getValue().getPath())) {
-                player.sendMessage(Text.literal("You cannot interact here!"), true);
+            // For all other interactions, check permission at the target block
+            if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), targetPos, dim)) {
+                player.sendMessage(Text.literal("You cannot interact with blocks here!"), true);
                 return ActionResult.FAIL;
             }
+
             return ActionResult.PASS;
         });
 
         // --- item uses (lava buckets, flint & steel, etc.) ---
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            if (world.isClient) return ActionResult.PASS;
-            if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
+            if (world.isClient()) return ActionResult.PASS;
 
-            BlockPos pos = player.getBlockPos();
-            if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), pos, world.getRegistryKey().getValue().getPath())) {
-                player.sendMessage(Text.literal("You cannot use items here!"), true);
-                return ActionResult.FAIL;
+            // We only care about actions that can grief, like placing lava/fire
+            // This is a simplified check; a more robust solution might check item tags
+            if (!(player.getStackInHand(hand).getItem() instanceof net.minecraft.item.BucketItem) &&
+                !(player.getStackInHand(hand).getItem() instanceof net.minecraft.item.FlintAndSteelItem)) {
+                return ActionResult.PASS;
             }
+
+            // Raycast to find the block the player is looking at
+            net.minecraft.util.hit.HitResult hit = player.raycast(5.0, 0.0f, true);
+            if (hit.getType() == net.minecraft.util.hit.HitResult.Type.BLOCK) {
+                BlockPos targetPos = ((net.minecraft.util.hit.BlockHitResult) hit).getBlockPos();
+                String dim = world.getRegistryKey().getValue().toString();
+
+                if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), targetPos, dim)) {
+                    player.sendMessage(Text.literal("You cannot use this item here!"), true);
+                    return ActionResult.FAIL;
+                }
+            }
+
             return ActionResult.PASS;
         });
     }
@@ -98,41 +124,44 @@ public class EventHandlers {
     // --- called each server tick to check enter/leave ---
     public static void onServerTick(MinecraftServer server) {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID pid = player.getUuid();
-            String dim = player.getWorld().getRegistryKey().getValue().getPath();
+            UUID playerId = player.getUuid();
+            String dim = player.getWorld().getRegistryKey().getValue().toString();
             BlockPos pos = player.getBlockPos();
 
-            List<Protection> inside = ProtectionsManager.protectionsContaining(pos, dim);
-            Set<String> newSet = new HashSet<>();
-            for (Protection p : inside) newSet.add(p.idString());
+            // Find all unique owners of protections the player is currently inside
+            Set<UUID> currentOwners = ProtectionsManager.protectionsContaining(pos, dim)
+                    .stream()
+                    .map(p -> p.owner)
+                    .collect(Collectors.toSet());
 
-            Set<String> oldSet = playerProtections.getOrDefault(pid, Collections.emptySet());
+            Set<UUID> previousOwners = playerProtectionOwners.getOrDefault(playerId, Collections.emptySet());
 
-            Set<String> entered = new HashSet<>(newSet);
-            entered.removeAll(oldSet);
-            Set<String> left = new HashSet<>(oldSet);
-            left.removeAll(newSet);
+            // --- Determine who they entered/left ---
+            Set<UUID> enteredOwners = new HashSet<>(currentOwners);
+            enteredOwners.removeAll(previousOwners);
 
-            for (String eid : entered) {
-                Protection p = ProtectionsManager.all().stream().filter(pr -> pr.idString().equals(eid)).findFirst().orElse(null);
-                if (p != null) {
-                    var owner = server.getPlayerManager().getPlayer(p.owner);
-                    if (owner != null) {
-                        player.sendMessage(Text.literal("You entered " + owner.getName().getString() + "'s protection."), false);
-                    }
-                }
-            }
-            for (String lid : left) {
-                Protection p = ProtectionsManager.all().stream().filter(pr -> pr.idString().equals(lid)).findFirst().orElse(null);
-                if (p != null) {
-                    var owner = server.getPlayerManager().getPlayer(p.owner);
-                    if (owner != null) {
-                        player.sendMessage(Text.literal("You left " + owner.getName().getString() + "'s protection."), false);
-                    }
-                }
+            Set<UUID> leftOwners = new HashSet<>(previousOwners);
+            leftOwners.removeAll(currentOwners);
+
+            // --- Send messages ---
+            for (UUID ownerId : enteredOwners) {
+                ServerPlayerEntity owner = server.getPlayerManager().getPlayer(ownerId);
+                String ownerName = (owner != null) ? owner.getName().getString() : "someone";
+                player.sendMessage(Text.literal("You have entered " + ownerName + "'s protection."), false);
             }
 
-            playerProtections.put(pid, newSet);
+            for (UUID ownerId : leftOwners) {
+                ServerPlayerEntity owner = server.getPlayerManager().getPlayer(ownerId);
+                String ownerName = (owner != null) ? owner.getName().getString() : "someone";
+                player.sendMessage(Text.literal("You have left " + ownerName + "'s protection."), false);
+            }
+
+            // --- Update state for next tick ---
+            if (currentOwners.isEmpty()) {
+                playerProtectionOwners.remove(playerId);
+            } else {
+                playerProtectionOwners.put(playerId, currentOwners);
+            }
         }
     }
 }

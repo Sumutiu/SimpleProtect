@@ -17,16 +17,13 @@ public class Protection {
 
     public static final int H_RADIUS = 30; // horizontal radius
 
-    public boolean contains(BlockPos pos) {
-        if (!dimensionMatches(pos)) return false; // caller should pass world-dim info
+    public boolean contains(BlockPos pos, String dimension) {
+        if (!this.dimension.equals(dimension)) {
+            return false;
+        }
         int dx = Math.abs(pos.getX() - x);
         int dz = Math.abs(pos.getZ() - z);
         return dx <= H_RADIUS && dz <= H_RADIUS;
-    }
-
-    private boolean dimensionMatches(BlockPos pos) {
-        // actual world-dimension mapping handled by caller; kept simple here
-        return true;
     }
 
     public String idString() {
