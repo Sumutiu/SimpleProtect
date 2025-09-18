@@ -1,6 +1,7 @@
 package com.sumutiu.simpleprotect;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.util.math.BlockPos;
 
@@ -14,7 +15,7 @@ import static com.sumutiu.simpleprotect.MessagesHelper.*;
 import static com.sumutiu.simpleprotect.SimpleProtect.FILE;
 
 public class ProtectionsManager {
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     // Map<idString, Protection>
     private static final Map<String, Protection> protections = new ConcurrentHashMap<>();
 
