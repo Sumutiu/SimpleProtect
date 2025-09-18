@@ -17,8 +17,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class EventHandlers {
-    // track which protection owners a player is inside of
-    private static final Map<UUID, Set<UUID>> playerProtectionOwners = new HashMap<>();
+    // track which protection owners a player is inside of, mapping owner UUID to owner name
+    private static final Map<UUID, Map<UUID, String>> playerInProtections = new HashMap<>();
 
     public static void register() {
         // --- block break prevention & protection removal ---
@@ -67,6 +67,19 @@ public class EventHandlers {
                 BlockPos placePos = targetPos.offset(hitResult.getSide());
                 // Allow placing emerald blocks if the location is not protected OR player has perms
                 if (ProtectionsManager.isPlayerAllowedAt(player.getUuid(), placePos, dim)) {
+                    // Check for overlaps with other players' protections
+                    for (Protection existingProtection : ProtectionsManager.all()) {
+                        if (!existingProtection.owner.equals(player.getUuid())) {
+                            int totalRadius = Protection.H_RADIUS * 2;
+                            boolean overlapX = Math.abs(placePos.getX() - existingProtection.x) <= totalRadius;
+                            boolean overlapZ = Math.abs(placePos.getZ() - existingProtection.z) <= totalRadius;
+                            if (overlapX && overlapZ) {
+                                player.sendMessage(Text.literal("Your protection would overlap with someone else's protection."), true);
+                                return ActionResult.FAIL;
+                            }
+                        }
+                    }
+
                     // Since this event is before the block is placed, we can't be 100% sure.
                     // We will create the protection, and if the block placement fails, it's a minor issue.
                     // A better solution would involve a post-placement event.
@@ -75,6 +88,7 @@ public class EventHandlers {
                     p.y = placePos.getY();
                     p.z = placePos.getZ();
                     p.owner = player.getUuid();
+                    p.ownerName = player.getName().getString();
                     p.dimension = dim;
                     ProtectionsManager.addProtection(p);
                     player.sendMessage(Text.literal("Created a new protection zone!"), false);
@@ -129,38 +143,38 @@ public class EventHandlers {
             BlockPos pos = player.getBlockPos();
 
             // Find all unique owners of protections the player is currently inside
-            Set<UUID> currentOwners = ProtectionsManager.protectionsContaining(pos, dim)
+            Map<UUID, String> currentOwnerInfo = ProtectionsManager.protectionsContaining(pos, dim)
                     .stream()
-                    .map(p -> p.owner)
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toMap(p -> p.owner, p -> p.ownerName, (name1, name2) -> name1));
 
-            Set<UUID> previousOwners = playerProtectionOwners.getOrDefault(playerId, Collections.emptySet());
+            Map<UUID, String> previousOwnerInfo = playerInProtections.getOrDefault(playerId, Collections.emptyMap());
 
             // --- Determine who they entered/left ---
-            Set<UUID> enteredOwners = new HashSet<>(currentOwners);
-            enteredOwners.removeAll(previousOwners);
+            Set<UUID> currentOwnerIds = currentOwnerInfo.keySet();
+            Set<UUID> previousOwnerIds = previousOwnerInfo.keySet();
 
-            Set<UUID> leftOwners = new HashSet<>(previousOwners);
-            leftOwners.removeAll(currentOwners);
+            Set<UUID> enteredOwnerIds = new HashSet<>(currentOwnerIds);
+            enteredOwnerIds.removeAll(previousOwnerIds);
+
+            Set<UUID> leftOwnerIds = new HashSet<>(previousOwnerIds);
+            leftOwnerIds.removeAll(currentOwnerIds);
 
             // --- Send messages ---
-            for (UUID ownerId : enteredOwners) {
-                ServerPlayerEntity owner = server.getPlayerManager().getPlayer(ownerId);
-                String ownerName = (owner != null) ? owner.getName().getString() : "someone";
+            for (UUID ownerId : enteredOwnerIds) {
+                String ownerName = currentOwnerInfo.get(ownerId);
                 player.sendMessage(Text.literal("You have entered " + ownerName + "'s protection."), false);
             }
 
-            for (UUID ownerId : leftOwners) {
-                ServerPlayerEntity owner = server.getPlayerManager().getPlayer(ownerId);
-                String ownerName = (owner != null) ? owner.getName().getString() : "someone";
+            for (UUID ownerId : leftOwnerIds) {
+                String ownerName = previousOwnerInfo.get(ownerId); // Get name from previous state
                 player.sendMessage(Text.literal("You have left " + ownerName + "'s protection."), false);
             }
 
             // --- Update state for next tick ---
-            if (currentOwners.isEmpty()) {
-                playerProtectionOwners.remove(playerId);
+            if (currentOwnerInfo.isEmpty()) {
+                playerInProtections.remove(playerId);
             } else {
-                playerProtectionOwners.put(playerId, currentOwners);
+                playerInProtections.put(playerId, currentOwnerInfo);
             }
         }
     }

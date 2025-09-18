@@ -12,6 +12,7 @@ public class Protection {
     @SerializedName("y") public int y;
     @SerializedName("z") public int z;
     @SerializedName("owner") public UUID owner;
+    @SerializedName("ownerName") public String ownerName;
     @SerializedName("allowed") public List<UUID> allowed = new ArrayList<>();
     @SerializedName("dimension") public String dimension; // "overworld", "the_nether", "the_end"
 
