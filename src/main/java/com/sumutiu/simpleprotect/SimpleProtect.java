@@ -29,35 +29,29 @@ public class SimpleProtect implements ModInitializer {
 		}
 	}
 
-	// Function that initializes the plugin storage
+	/**
+	 * Initializes the mod by creating necessary files and loading protections.
+	 * @return true if initialization is successful, false otherwise.
+	 */
 	private static boolean initPlugin() {
 		logAsciiBanner(MOD_ASCII_BANNER, "[SimpleProtect]: V" + getModVersion() + " - Your build matters!");
 
 		try {
-			// create folder if it doesn't exist
-			if (!Files.exists(STORAGE_FOLDER)) {
+			if (Files.notExists(STORAGE_FOLDER)) {
 				Files.createDirectories(STORAGE_FOLDER);
 				Logger(0, MAIN_FOLDER_CREATED);
 			}
-
-			// create empty JSON file if it doesn't exist
-			if (!Files.exists(FILE)) {
-				if (!ProtectionsManager.save()) {
-					Logger(2, MAIN_FILE_CREATION_FAILED);
-					return false;
-				}
-			}
-
-			// load protections from file
-			if (!ProtectionsManager.load()) {
-				Logger(2, MAIN_FILE_CREATION_FAILED);
-				return false;
-			}
-
-			return true;
 		} catch (IOException e) {
 			Logger(2, MAIN_FOLDER_CREATION_FAILED);
 			return false;
 		}
+
+		if (Files.notExists(FILE)) {
+			if (!ProtectionsManager.save()) {
+				return false;
+			}
+		}
+
+		return ProtectionsManager.load();
 	}
 }

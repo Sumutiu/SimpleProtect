@@ -51,10 +51,10 @@ public class ProtectionsManager {
         save();
     }
 
-    public static Collection<Protection> all() { return protections.values(); }
+    public static Collection<Protection> all() { return new ArrayList<>(protections.values()); }
 
     public static Optional<Protection> findByOwnerAt(UUID owner, BlockPos pos, String dimension) {
-        return protections.values().stream()
+        return all().stream()
                 .filter(p -> p.owner.equals(owner))
                 .filter(p -> p.contains(pos, dimension))
                 .min(Comparator.comparingInt(p -> Math.abs(p.x - pos.getX()) + Math.abs(p.z - pos.getZ())));
@@ -62,7 +62,7 @@ public class ProtectionsManager {
 
     public static List<Protection> protectionsContaining(BlockPos pos, String dimension) {
         List<Protection> out = new ArrayList<>();
-        for (Protection p : protections.values()) {
+        for (Protection p : all()) {
             if (p.contains(pos, dimension)) {
                 out.add(p);
             }
