@@ -1,6 +1,8 @@
-package com.sumutiu.simpleprotect;
+package com.sumutiu.simpleprotect.commands;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.sumutiu.simpleprotect.storage.Protection;
+import com.sumutiu.simpleprotect.storage.ProtectionsManager;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.CommandSource;
 import net.minecraft.server.MinecraftServer;
@@ -9,7 +11,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.Optional;
 
-import static com.sumutiu.simpleprotect.MessagesHelper.*;
+import static com.sumutiu.simpleprotect.util.MessagesHelper.*;
 
 public class ProtectionCommands {
     public static void register() {

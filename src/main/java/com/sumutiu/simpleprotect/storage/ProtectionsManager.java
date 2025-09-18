@@ -1,4 +1,4 @@
-package com.sumutiu.simpleprotect;
+package com.sumutiu.simpleprotect.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.sumutiu.simpleprotect.MessagesHelper.*;
+import static com.sumutiu.simpleprotect.util.MessagesHelper.*;
 import static com.sumutiu.simpleprotect.SimpleProtect.FILE;
 
 public class ProtectionsManager {

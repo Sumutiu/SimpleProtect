@@ -1,4 +1,4 @@
-package com.sumutiu.simpleprotect;
+package com.sumutiu.simpleprotect.util;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -14,14 +14,14 @@ public class MessagesHelper {
     // Core / General
     // ----------------------------
     public static final String MOD_ASCII_BANNER = """
-         ______                ______                                     \s
-        |  ____|              |  ____|                                    \s
-        | |__   __ _ ___ _   _| |__   ___ ___  _ __   ___  _ __ ___  _   _\s
-        |  __| / _` / __| | | |  __| / __/ _ \\| '_ \\ / _ \\| '_ ` _ \\| | | |
-        | |___| (_| \\__ \\ |_| | |___| (_| (_) | | | | (_) | | | | | | |_| |
-        |______\\__,_|___/\\__, |______\\___\\___/|_| |_|\\___/|_| |_| |_|\\__, |
-                          __/ |                                       __/ |
-                         |___/                                       |___/\s
+          _____ _                 _      _____           _            _  \s
+         / ____(_)               | |    |  __ \\         | |          | | \s
+        | (___  _ _ __ ___  _ __ | | ___| |__) | __ ___ | |_ ___  ___| |_\s
+         \\___ \\| | '_ ` _ \\| '_ \\| |/ _ \\  ___/ '__/ _ \\| __/ _ \\/ __| __|
+         ____) | | | | | | | |_) | |  __/ |   | | | (_) | ||  __/ (__| |_\s
+        |_____/|_|_| |_| |_| .__/|_|\\___|_|   |_|  \\___/ \\__\\___|\\___|\\__|
+                           | |                                           \s
+                           |_|                                           \s
         """;
 
     public static final String Mod_ID = "[SimpleProtect]";
@@ -31,7 +31,6 @@ public class MessagesHelper {
     // ----------------------------
     public static final String MAIN_FOLDER_CREATED = "Mod folders have been created successfully.";
     public static final String MAIN_FOLDER_CREATION_FAILED = "Failed to create the mod folder.";
-    public static final String MAIN_FILE_CREATION_FAILED = "Failed to create the mod JSON file.";
     public static final String MOD_INIT_FAILED = "Mod has failed to initialize. Error in creating the mod folder.";
 
     public static final String PROT_FILE_READ_FAILED = "Failed to load JSON file.";

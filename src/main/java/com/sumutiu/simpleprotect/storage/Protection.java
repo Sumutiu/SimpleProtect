@@ -1,4 +1,4 @@
-package com.sumutiu.simpleprotect;
+package com.sumutiu.simpleprotect.storage;
 
 import com.google.gson.annotations.SerializedName;
 import net.minecraft.util.math.BlockPos;

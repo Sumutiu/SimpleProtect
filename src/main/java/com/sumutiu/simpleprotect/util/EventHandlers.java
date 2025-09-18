@@ -1,6 +1,8 @@
-package com.sumutiu.simpleprotect;
+package com.sumutiu.simpleprotect.util;
 
 
+import com.sumutiu.simpleprotect.storage.Protection;
+import com.sumutiu.simpleprotect.storage.ProtectionsManager;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
@@ -14,7 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.sumutiu.simpleprotect.MessagesHelper.*;
+import static com.sumutiu.simpleprotect.util.MessagesHelper.*;
 
 public class EventHandlers {
     // track which protection owners a player is inside of, mapping owner UUID to owner name

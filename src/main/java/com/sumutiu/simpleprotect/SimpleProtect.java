@@ -1,5 +1,8 @@
 package com.sumutiu.simpleprotect;
 
+import com.sumutiu.simpleprotect.commands.ProtectionCommands;
+import com.sumutiu.simpleprotect.storage.ProtectionsManager;
+import com.sumutiu.simpleprotect.util.EventHandlers;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
@@ -7,7 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.sumutiu.simpleprotect.MessagesHelper.*;
+import static com.sumutiu.simpleprotect.util.MessagesHelper.*;
 
 public class SimpleProtect implements ModInitializer {
 
