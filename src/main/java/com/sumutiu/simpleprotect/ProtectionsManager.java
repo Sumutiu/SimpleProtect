@@ -2,54 +2,42 @@ package com.sumutiu.simpleprotect;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.math.BlockPos;
 
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.sumutiu.simpleprotect.MessagesHelper.*;
+import static com.sumutiu.simpleprotect.SimpleProtect.FILE;
+
 public class ProtectionsManager {
-    private static final Path BASE_DIR = FabricLoader.getInstance().getGameDir().resolve("mods").resolve("SimpleProtect");
-    private static final Path FILE = BASE_DIR.resolve("SimpleProtect.json");
     private static final Gson GSON = new Gson();
     // Map<idString, Protection>
     private static final Map<String, Protection> protections = new ConcurrentHashMap<>();
 
-    public static void init() {
-        try {
-            Files.createDirectories(BASE_DIR);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        load();
-    }
-
-    public static synchronized void load() {
-        if (!Files.exists(FILE)) {
-            save(); // create empty file
-            return;
-        }
+    public static synchronized boolean load() {
         try (Reader r = Files.newBufferedReader(FILE)) {
             Type listType = new TypeToken<List<Protection>>(){}.getType();
             List<Protection> list = GSON.fromJson(r, listType);
             protections.clear();
-            if (list != null) {
-                for (Protection p : list) protections.put(p.idString(), p);
-            }
+            if (list != null) { for (Protection p : list) protections.put(p.idString(), p); }
+            return true;
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Logger(2, PROT_FILE_READ_FAILED);
+            return false;
         }
     }
 
-    public static synchronized void save() {
+    public static synchronized boolean save() {
         try (Writer w = Files.newBufferedWriter(FILE)) {
             GSON.toJson(new ArrayList<>(protections.values()), w);
+            return true;
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Logger(2, PROT_FILE_SAVE_FAILED);
+            return false;
         }
     }
 
@@ -63,16 +51,7 @@ public class ProtectionsManager {
         save();
     }
 
-    // Call this after modifying a protection's state (e.g., adding an allowed player)
-    public static synchronized void updateProtection(Protection p) {
-        save();
-    }
-
     public static Collection<Protection> all() { return protections.values(); }
-
-    public static Optional<Protection> getById(String id) {
-        return Optional.ofNullable(protections.get(id));
-    }
 
     public static Optional<Protection> findByOwnerAt(UUID owner, BlockPos pos, String dimension) {
         return protections.values().stream()

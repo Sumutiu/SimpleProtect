@@ -8,13 +8,13 @@ import net.minecraft.block.Blocks;
 import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.sumutiu.simpleprotect.MessagesHelper.*;
 
 public class EventHandlers {
     // track which protection owners a player is inside of, mapping owner UUID to owner name
@@ -37,10 +37,10 @@ public class EventHandlers {
                     Protection p = protectionAt.get();
                     if (p.owner.equals(player.getUuid())) {
                         ProtectionsManager.removeProtection(p);
-                        player.sendMessage(Text.literal("Your protection has been removed."), false);
+                        PrivateMessage((ServerPlayerEntity) player, PROTECTION_REMOVED);
                         return true; // Allow break
                     } else {
-                        player.sendMessage(Text.literal("You cannot break another player's protection block!"), true);
+                        PrivateMessage((ServerPlayerEntity) player, BREAK_OTHERS_PROT);
                         return false; // Prevent break
                     }
                 }
@@ -48,7 +48,7 @@ public class EventHandlers {
 
             // General block break protection
             if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), pos, dim)) {
-                player.sendMessage(Text.literal("You cannot break blocks here!"), true);
+                PrivateMessage((ServerPlayerEntity) player, NO_BLOCK_DMG);
                 return false; // Prevent break
             }
 
@@ -74,7 +74,7 @@ public class EventHandlers {
                             boolean overlapX = Math.abs(placePos.getX() - existingProtection.x) <= totalRadius;
                             boolean overlapZ = Math.abs(placePos.getZ() - existingProtection.z) <= totalRadius;
                             if (overlapX && overlapZ) {
-                                player.sendMessage(Text.literal("Your protection would overlap with someone else's protection."), true);
+                                PrivateMessage((ServerPlayerEntity) player, PROT_OVERLAP);
                                 return ActionResult.FAIL;
                             }
                         }
@@ -91,17 +91,17 @@ public class EventHandlers {
                     p.ownerName = player.getName().getString();
                     p.dimension = dim;
                     ProtectionsManager.addProtection(p);
-                    player.sendMessage(Text.literal("Created a new protection zone!"), false);
+                    PrivateMessage((ServerPlayerEntity) player, NEW_PROT_CONFIRM);
                     return ActionResult.PASS; // Let the block be placed
                 } else {
-                    player.sendMessage(Text.literal("You cannot place a protection block here!"), true);
+                    PrivateMessage((ServerPlayerEntity) player, NO_PROT_PLACEMENT);
                     return ActionResult.FAIL;
                 }
             }
 
             // For all other interactions, check permission at the target block
             if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), targetPos, dim)) {
-                player.sendMessage(Text.literal("You cannot interact with blocks here!"), true);
+                PrivateMessage((ServerPlayerEntity) player, NO_INTERACTION);
                 return ActionResult.FAIL;
             }
 
@@ -126,7 +126,7 @@ public class EventHandlers {
                 String dim = world.getRegistryKey().getValue().toString();
 
                 if (!ProtectionsManager.isPlayerAllowedAt(player.getUuid(), targetPos, dim)) {
-                    player.sendMessage(Text.literal("You cannot use this item here!"), true);
+                    PrivateMessage((ServerPlayerEntity) player, NO_ITEM_USE);
                     return ActionResult.FAIL;
                 }
             }
@@ -162,12 +162,12 @@ public class EventHandlers {
             // --- Send messages ---
             for (UUID ownerId : enteredOwnerIds) {
                 String ownerName = currentOwnerInfo.get(ownerId);
-                player.sendMessage(Text.literal("You have entered " + ownerName + "'s protection."), false);
+                PrivateMessage(player, String.format(PROT_ENTER, ownerName));
             }
 
             for (UUID ownerId : leftOwnerIds) {
                 String ownerName = previousOwnerInfo.get(ownerId); // Get name from previous state
-                player.sendMessage(Text.literal("You have left " + ownerName + "'s protection."), false);
+                PrivateMessage(player, String.format(PROT_EXIT, ownerName));
             }
 
             // --- Update state for next tick ---
