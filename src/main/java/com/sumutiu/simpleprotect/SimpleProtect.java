@@ -37,7 +37,7 @@ public class SimpleProtect implements ModInitializer {
 	 * @return true if initialization is successful, false otherwise.
 	 */
 	private static boolean initPlugin() {
-		logAsciiBanner(MOD_ASCII_BANNER, "[SimpleProtect]: V" + getModVersion() + " - Your build matters!");
+		logAsciiBanner(MOD_ASCII_BANNER, Mod_ID + ": V" + getModVersion() + " - Your build matters!");
 
 		try {
 			if (Files.notExists(STORAGE_FOLDER)) {
