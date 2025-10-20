@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import static com.sumutiu.simpleprotect.util.MessagesHelper.*;
 
 public class EventHandlers {
-    // track which protection owners a player is inside of, mapping owner UUID to owner name
+    // track which protection owners a player is inside, mapping owner UUID to owner name
     private static final Map<UUID, Map<UUID, String>> playerInProtections = new HashMap<>();
 
     public static void register() {

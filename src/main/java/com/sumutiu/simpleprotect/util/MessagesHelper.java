@@ -98,9 +98,9 @@ public class MessagesHelper {
     }
 
     public static boolean isConnected(ServerPlayerEntity player) {
-        return player != null
-                && player.getEntityWorld().getServer() != null
-                && player.getEntityWorld().getServer().getPlayerManager().getPlayer(player.getUuid()) == player;
+        if (player == null) return false;
+        player.getEntityWorld();
+        return player.getEntityWorld().getServer().getPlayerManager().getPlayer(player.getUuid()) == player;
     }
 
     public static void logAsciiBanner(String banner, String footer) {
