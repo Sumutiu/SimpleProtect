@@ -141,7 +141,7 @@ public class EventHandlers {
     public static void onServerTick(MinecraftServer server) {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             UUID playerId = player.getUuid();
-            String dim = player.getWorld().getRegistryKey().getValue().toString();
+            String dim = player.getEntityWorld().getRegistryKey().getValue().toString();
             BlockPos pos = player.getBlockPos();
 
             // Find all unique owners of protections the player is currently inside

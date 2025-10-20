@@ -99,7 +99,7 @@ public class ProtectionCommands {
     }
 
     private static Optional<Protection> findOwnedProtectionAt(ServerPlayerEntity player) {
-        String dim = player.getWorld().getRegistryKey().getValue().toString();
+        String dim = player.getEntityWorld().getRegistryKey().getValue().toString();
         return ProtectionsManager.findByOwnerAt(player.getUuid(), player.getBlockPos(), dim);
     }
 }
