@@ -2,9 +2,9 @@ package com.sumutiu.simpleprotect.util;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,11 +67,14 @@ public class MessagesHelper {
     // ----------------------------
     // Player messaging
     // ----------------------------
-    public static void PrivateMessage(ServerPlayerEntity player, String message) {
+    public static void PrivateMessage(ServerPlayer player, String message) {
         if (isConnected(player)) {
-            player.sendMessage(Text.literal(Mod_ID + ": ")
-                    .styled(style -> style.withColor(Formatting.GREEN))
-                    .append(Text.literal(message).styled(s -> s.withColor(Formatting.WHITE))), false);
+            player.sendSystemMessage(
+                    Component.literal(Mod_ID + ": ")
+                            .withStyle(style -> style.withColor(ChatFormatting.GREEN))
+                            .append(Component.literal(message)
+                                    .withStyle(style -> style.withColor(ChatFormatting.WHITE)))
+            );
         }
     }
 
@@ -97,10 +100,8 @@ public class MessagesHelper {
                 .orElse("unknown");
     }
 
-    public static boolean isConnected(ServerPlayerEntity player) {
-        if (player == null) return false;
-        player.getEntityWorld();
-        return player.getEntityWorld().getServer().getPlayerManager().getPlayer(player.getUuid()) == player;
+    public static boolean isConnected(ServerPlayer player) {
+        return player != null && player.connection.getPlayer() == player;
     }
 
     public static void logAsciiBanner(String banner, String footer) {
