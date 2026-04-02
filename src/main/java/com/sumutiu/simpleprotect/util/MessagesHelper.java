@@ -83,9 +83,9 @@ public class MessagesHelper {
     // ----------------------------
     public static void Logger(int type, String message) {
         switch (type) {
-            case 0 -> LOGGER.info(message);
-            case 1 -> LOGGER.warn(message);
-            case 2 -> LOGGER.error(message);
+            case 0 -> LOGGER.info(Mod_ID + ": {}", message);
+            case 1 -> LOGGER.warn(Mod_ID + ": {}", message);
+            case 2 -> LOGGER.error(Mod_ID + ": {}", message);
         }
     }
 
