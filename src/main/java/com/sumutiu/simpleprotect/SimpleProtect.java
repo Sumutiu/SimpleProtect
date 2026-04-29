@@ -59,6 +59,10 @@ public class SimpleProtect implements ModInitializer {
 			EventHandlers.onServerTick(server);
 		});
 
+		ServerLifecycleEvents.SERVER_STOPPED.register(_ ->
+			SimpleProtectInitialized = false
+		);
+
 		EventHandlers.register();
 		ProtectionCommands.register();
 	}
