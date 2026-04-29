@@ -39,8 +39,10 @@ public class MessagesHelper {
     // ----------------------------
     // Protection - General
     // ----------------------------
+    public static final String PLAYER_ONLY_COMMAND = "This command can only be used by players.";
     public static final String PROTECTION_REMOVED = "Your protection has been removed.";
     public static final String BREAK_OTHERS_PROT = "You cannot break another player's protection block!";
+    public static final String MOD_NOT_INITIALIZED = "SimpleProtect mod is not initialized. Try again later.";
     public static final String NO_BLOCK_DMG = "You cannot break blocks here!";
     public static final String PROT_OVERLAP = "Your protection would overlap with someone else's protection.";
     public static final String NEW_PROT_CONFIRM = "Created a new protection zone!";
@@ -49,6 +51,7 @@ public class MessagesHelper {
     public static final String NO_ITEM_USE = "You cannot use this item here!";
     public static final String PROT_ENTER = "You have entered %s's protection.";
     public static final String PROT_EXIT = "You have left %s's protection.";
+    public static final String MOD_INIT_NOT_READY = "Mod has not initialized.";
 
     // ----------------------------
     // Protection - Commands

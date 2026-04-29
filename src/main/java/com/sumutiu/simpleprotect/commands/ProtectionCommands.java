@@ -4,12 +4,14 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sumutiu.simpleprotect.storage.Protection;
 import com.sumutiu.simpleprotect.storage.ProtectionsManager;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 
+import static com.sumutiu.simpleprotect.SimpleProtect.SimpleProtectInitialized;
 import static com.sumutiu.simpleprotect.util.MessagesHelper.*;
 
 public class ProtectionCommands {
@@ -31,50 +33,47 @@ public class ProtectionCommands {
                                                     return builder.buildFuture();
                                                 })
                                                 .executes(ctx -> {
-                                                    ServerPlayer executor = ctx.getSource().getPlayer();
 
-                                                    if (executor == null) return 0;
-
-                                                    Optional<Protection> protectionOpt =
-                                                            findOwnedProtectionAt(executor);
-
-                                                    if (protectionOpt.isEmpty()) {
-                                                        PrivateMessage(executor, NOT_IN_PROTECTION);
-                                                        return 1;
+                                                    CommandSourceStack source = ctx.getSource();
+                                                    if (!(source.getEntity() instanceof ServerPlayer executor)) {
+                                                        Logger(1, PLAYER_ONLY_COMMAND);
+                                                        return 0;
                                                     }
 
-                                                    String targetName =
-                                                            StringArgumentType.getString(ctx, "player");
+                                                    if (SimpleProtectInitialized) {
+                                                        Optional<Protection> protectionOpt = findOwnedProtectionAt(executor);
 
-                                                    ServerPlayer target =
-                                                            ctx.getSource().getServer()
-                                                                    .getPlayerList()
-                                                                    .getPlayerByName(targetName);
+                                                        if (protectionOpt.isEmpty()) {
+                                                            PrivateMessage(executor, NOT_IN_PROTECTION);
+                                                            return 1;
+                                                        }
 
-                                                    if (target == null) {
-                                                        PrivateMessage(executor,
-                                                                String.format(PLAYER_NOT_FOUND, targetName));
+                                                        String targetName = StringArgumentType.getString(ctx, "player");
+
+                                                        ServerPlayer target = ctx.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+
+                                                        if (target == null) {
+                                                            PrivateMessage(executor, String.format(PLAYER_NOT_FOUND, targetName));
+                                                            return 1;
+                                                        }
+
+                                                        Protection p = protectionOpt.get();
+
+                                                        if (p.allowed.contains(target.getUUID())) {
+                                                            PrivateMessage(executor, String.format(PLAYER_ALLOWED_ALREADY, targetName));
+                                                        } else {
+                                                            p.allowed.add(target.getUUID());
+                                                            ProtectionsManager.save();
+
+                                                            PrivateMessage(executor, String.format(PLAYER_ADDED, targetName));
+
+                                                            PrivateMessage(target, String.format(PLAYER_ADDED_CONFIRM, executor.getName().getString()));
+                                                        }
                                                         return 1;
-                                                    }
-
-                                                    Protection p = protectionOpt.get();
-
-                                                    if (p.allowed.contains(target.getUUID())) {
-                                                        PrivateMessage(executor,
-                                                                String.format(PLAYER_ALLOWED_ALREADY, targetName));
                                                     } else {
-                                                        p.allowed.add(target.getUUID());
-                                                        ProtectionsManager.save();
-
-                                                        PrivateMessage(executor,
-                                                                String.format(PLAYER_ADDED, targetName));
-
-                                                        PrivateMessage(target,
-                                                                String.format(PLAYER_ADDED_CONFIRM,
-                                                                        executor.getName().getString()));
+                                                        PrivateMessage(executor, MOD_INIT_NOT_READY);
+                                                        return 0;
                                                     }
-
-                                                    return 1;
                                                 })
                                         )
                                 )
@@ -91,46 +90,40 @@ public class ProtectionCommands {
                                                     return builder.buildFuture();
                                                 })
                                                 .executes(ctx -> {
-                                                    ServerPlayer executor = ctx.getSource().getPlayer();
-
-                                                    if (executor == null) return 0;
-
-                                                    Optional<Protection> protectionOpt =
-                                                            findOwnedProtectionAt(executor);
-
-                                                    if (protectionOpt.isEmpty()) {
-                                                        PrivateMessage(executor, NOT_IN_PROTECTION);
-                                                        return 1;
+                                                    CommandSourceStack source = ctx.getSource();
+                                                    if (!(source.getEntity() instanceof ServerPlayer executor)) {
+                                                        Logger(1, PLAYER_ONLY_COMMAND);
+                                                        return 0;
                                                     }
 
-                                                    String targetName =
-                                                            StringArgumentType.getString(ctx, "player");
+                                                    if (SimpleProtectInitialized) {
 
-                                                    ServerPlayer target =
-                                                            ctx.getSource().getServer()
-                                                                    .getPlayerList()
-                                                                    .getPlayerByName(targetName);
+                                                        Optional<Protection> protectionOpt = findOwnedProtectionAt(executor);
 
-                                                    if (target == null) {
-                                                        PrivateMessage(executor,
-                                                                String.format(PLAYER_NOT_FOUND, targetName));
-                                                        return 1;
-                                                    }
+                                                        if (protectionOpt.isEmpty()) {
+                                                            PrivateMessage(executor, NOT_IN_PROTECTION);
+                                                            return 1;
+                                                        }
 
-                                                    Protection p = protectionOpt.get();
+                                                        String targetName = StringArgumentType.getString(ctx, "player");
 
-                                                    if (p.allowed.remove(target.getUUID())) {
-                                                        ProtectionsManager.save();
+                                                        ServerPlayer target = ctx.getSource().getServer().getPlayerList().getPlayerByName(targetName);
 
-                                                        PrivateMessage(executor,
-                                                                String.format(PLAYER_REMOVED, targetName));
+                                                        if (target == null) {
+                                                            PrivateMessage(executor, String.format(PLAYER_NOT_FOUND, targetName));
+                                                            return 1;
+                                                        }
 
-                                                        PrivateMessage(target,
-                                                                String.format(PLAYER_REMOVED_CONFIRM,
-                                                                        executor.getName().getString()));
-                                                    } else {
-                                                        PrivateMessage(executor,
-                                                                String.format(PLAYER_REMOVED_FAIL, targetName));
+                                                        Protection p = protectionOpt.get();
+
+                                                        if (p.allowed.remove(target.getUUID())) {
+                                                            ProtectionsManager.save();
+
+                                                            PrivateMessage(executor, String.format(PLAYER_REMOVED, targetName));
+                                                            PrivateMessage(target, String.format(PLAYER_REMOVED_CONFIRM, executor.getName().getString()));
+                                                        } else {
+                                                            PrivateMessage(executor, String.format(PLAYER_REMOVED_FAIL, targetName));
+                                                        }
                                                     }
 
                                                     return 1;
