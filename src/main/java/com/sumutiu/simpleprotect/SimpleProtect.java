@@ -54,7 +54,11 @@ public class SimpleProtect implements ModInitializer {
 			}
 		});
 
-		ServerTickEvents.START_SERVER_TICK.register(EventHandlers::onServerTick);
+		ServerTickEvents.START_SERVER_TICK.register(server -> {
+			if (!SimpleProtectInitialized) return;
+			EventHandlers.onServerTick(server);
+		});
+
 		EventHandlers.register();
 		ProtectionCommands.register();
 	}
