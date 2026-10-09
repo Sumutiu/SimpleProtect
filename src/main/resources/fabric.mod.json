@@ -15,9 +15,12 @@
 			"com.sumutiu.simpleprotect.SimpleProtect"
 		]
 	},
+	"mixins": [
+		"simpleprotect.mixins.json"
+	],
 	"depends": {
-		"fabricloader": ">=0.19.3",
-		"minecraft": "~26.2",
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
 		"java": ">=25",
 		"fabric-api": "*"
 	}
