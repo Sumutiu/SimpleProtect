@@ -186,9 +186,7 @@ public class SimpleProtectConfig {
         return config.SimpleProtect_MinExtensionDistance;
     }
 
-    public static boolean getProtectEntities() {
-        return config.SimpleProtect_ProtectEntities;
-    }
+    public static boolean getProtectEntities() { return config.SimpleProtect_ProtectEntities; }
 
     public static boolean getProtectFromExplosions() {
         return config.SimpleProtect_ProtectFromExplosions;
