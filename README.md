@@ -1,6 +1,6 @@
 # 🟩 SimpleProtect – Your build matters!
 
-**SimpleProtect** is a lightweight and fully server-side **Fabric** mod that brings a simple, emerald-block-based protection system to your Minecraft world.  
+**SimpleProtect** is a lightweight and fully server-side mod for **Fabric** and **NeoForge** that brings a simple, emerald-block-based protection system to your Minecraft world.  
 Farm emeralds, craft them into blocks, and use them to safeguard your builds from griefers.  
 
 Perfect for survival servers, SMPs, and creative builders who want peace of mind.
@@ -98,8 +98,29 @@ If the file can't be read, the mod doesn't start (players can't join) and the fi
 
 ## 🧩 Requirements
 
+**Fabric**
 - [Fabric Loader](https://fabricmc.net/use/)  
 - [Fabric API](https://modrinth.com/mod/fabric-api)  
+
+**NeoForge**
+- [NeoForge](https://neoforged.net/) (nothing else needed)  
+
+---
+
+## 🛠️ Building
+
+The project builds both loaders from one shared codebase:
+
+- `common/` – the mod itself (protections, commands, config, storage, most mixins), plain Minecraft code  
+- `fabric/` – the Fabric entrypoint, `fabric.mod.json` and the Fabric-only fire mixin  
+- `neoforge/` – the NeoForge entrypoint, `neoforge.mods.toml` and the NeoForge-only fire mixin  
+
+Run `gradlew build` (Java 25). The jars are created in:
+
+- `fabric/build/libs/simpleprotect-fabric-<version>.jar`  
+- `neoforge/build/libs/simpleprotect-neoforge-<version>.jar`  
+
+Versions (Minecraft, Fabric, NeoForge) are all set in `gradle.properties`.
 
 ---
 

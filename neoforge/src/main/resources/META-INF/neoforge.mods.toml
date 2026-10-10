@@ -1,0 +1,32 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+license = "AGPL-3.0"
+
+[[mods]]
+modId = "simpleprotect"
+version = "${version}"
+displayName = "SimpleProtect"
+authors = "Sumutiu"
+# Square icon shown in the mod list (a path from the root of the jar)
+iconFile = "assets/simpleprotect/icon.png"
+description = '''A simple protection mod for NeoForge.'''
+
+[[mixins]]
+config = "simpleprotect.mixins.json"
+
+[[mixins]]
+config = "simpleprotect.neoforge.mixins.json"
+
+[[dependencies.simpleprotect]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.simpleprotect]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"

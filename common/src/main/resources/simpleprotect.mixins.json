@@ -1,0 +1,19 @@
+{
+	"required": true,
+	"package": "com.sumutiu.simpleprotect.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"DispenserBlockMixin",
+		"EntityMixin",
+		"FlowingFluidMixin",
+		"LavaFluidMixin",
+		"PistonBaseBlockMixin",
+		"ServerExplosionMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
