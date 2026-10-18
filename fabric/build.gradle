@@ -1,3 +1,5 @@
+import net.fabricmc.loom.configuration.ide.RunConfigSettings
+
 plugins {
     id 'multiloader-loader'
     id 'net.fabricmc.fabric-loom'
@@ -27,11 +29,11 @@ loom {
             generateRunConfig = true
             appendProjectPathToDisplayName = false
         }
-        client {
-            displayName = 'Fabric Client'
+        client { RunConfigSettings run ->
+            run.displayName.set('Fabric Client')
         }
-        server {
-            displayName = 'Fabric Server'
+        server { RunConfigSettings run ->
+            run.displayName.set('Fabric Server')
         }
     }
 }

@@ -1,3 +1,5 @@
+import net.neoforged.moddevgradle.dsl.RunModel
+
 plugins {
     id 'multiloader-loader'
     id 'net.neoforged.moddev'
@@ -8,13 +10,15 @@ neoForge {
     version = neoforge_version
 
     runs {
-        client {
-            client()
-            ideName = 'NeoForge Client'
+        // Each run is passed in as "run" so IntelliJ knows its type and doesn't warn
+        // ("Cannot assign 'String' to 'T'" with ideName = ...)
+        client { RunModel run ->
+            run.client()
+            run.ideName.set('NeoForge Client')
         }
-        server {
-            server()
-            ideName = 'NeoForge Server'
+        server { RunModel run ->
+            run.server()
+            run.ideName.set('NeoForge Server')
         }
     }
 
